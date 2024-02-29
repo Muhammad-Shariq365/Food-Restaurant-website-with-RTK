@@ -25,78 +25,74 @@ export const { setSearchQuery } = searchSlice.actions;
 const zoomInitialState = {
   zoomedItems: [],
   totalQuantity: 0,
-  totalPrice: 0, // Array to store the indices of zoomed items
-  // ... (other state properties)
+  totalPrice: 0,
 };
 
 const yourSlice = createSlice({
-    name: 'yourSlice',
-    initialState: zoomInitialState,
-    reducers: {
-      toggleZoomedItem: (state, action) => {
-        const { index, isZoomed } = action.payload;
-        const item = data[index]; // Assuming data is the array containing your items
-  
-        if (isZoomed) {
-          state.zoomedItems.push({...item, quantity:1});
-        } else {
-          state.zoomedItems = state.zoomedItems.filter((zoomedItem) => zoomedItem.id !== item.id);
-        }
-      },
-
-      getCartTotal: (state) => {
-        // Initialize total price and total quantity to 0
-        let totalQuantity = 0;
-        let totalPrice = 0;
-      
-        // Iterate through each item in the cart
-        state.zoomedItems.forEach((cartItem) => {
-          // Destructure price and quantity from the cart item
-          const { price, quantity } = cartItem;
-      
-          // Calculate the total for the current item
-          const itemTotal = price * quantity;
-      
-          // Update the overall total price and total quantity
-          totalPrice += itemTotal;
-          totalQuantity += quantity;
-        });
-      
-        // Update the state with the calculated total price and total quantity
-        state.totalPrice = parseInt(totalPrice.toFixed(2));
-        state.totalQuantity = totalQuantity;
-        
-      },
-      
-  
-      increaseItemQuantity: (state, action) => {
-        state.zoomedItems = state.zoomedItems.map((item) => {
-          if (item.id === action.payload) {
-            return { ...item, quantity: item.quantity + 1 };
-          }
-          return item;
-        });
-      },
-      decreaseItemQuantity: (state, action) => {
-        state.zoomedItems = state.zoomedItems.map((item) => {
-          if (item.id === action.payload) {
-            // Ensure the quantity is at least 1 before decreasing
-            const updatedQuantity = Math.max(1, item.quantity - 1);
-            return { ...item, quantity: updatedQuantity };
-          }
-          return item;
-        });
-      },
-      removeItem: (state, action) => {
-        const itemIdToRemove = action.payload;
-        state.zoomedItems = state.zoomedItems.filter((item) => item.id !== itemIdToRemove);
-      },
-  
+  name: 'yourSlice',
+  initialState: zoomInitialState,
+  reducers: {
+    toggleZoomedItem: (state, action) => {
+      const { index, isZoomed } = action.payload;
+      const item = data[index]; // Assuming data is the array containing your items
+    
+      if (isZoomed) {
+        state.zoomedItems.push({ ...item, quantity: 1 });
+        state.totalQuantity += 1;
+      } else {
+        state.zoomedItems = state.zoomedItems.filter((zoomedItem) => zoomedItem.id !== item.id);
+        state.totalQuantity -= 1; // Decrement totalQuantity by 1 when unzoomed
+      }
     },
-  });
-  
+    
 
-export const { toggleZoomedItem,increaseItemQuantity,decreaseItemQuantity,getCartTotal,removeItem } = yourSlice.actions;
+    getCartTotal: (state) => {
+      let totalPrice = 0;
+
+      state.zoomedItems.forEach((cartItem) => {
+        const { price, quantity } = cartItem;
+        totalPrice += price * quantity;
+      });
+
+      state.totalPrice = parseFloat(totalPrice.toFixed(2));
+    },
+
+    increaseItemQuantity: (state, action) => {
+      const itemId = action.payload;
+      const itemToUpdate = state.zoomedItems.find((item) => item.id === itemId);
+      if (itemToUpdate) {
+        itemToUpdate.quantity += 1;
+        state.totalQuantity += 1;
+      }
+    },
+
+    decreaseItemQuantity: (state, action) => {
+      const itemId = action.payload;
+      const itemToUpdate = state.zoomedItems.find((item) => item.id === itemId);
+      if (itemToUpdate && itemToUpdate.quantity > 1) {
+        itemToUpdate.quantity -= 1;
+        state.totalQuantity -= 1;
+      }
+    },
+
+    removeItem: (state, action) => {
+      const itemIdToRemove = action.payload;
+      const removedItem = state.zoomedItems.find((item) => item.id === itemIdToRemove);
+      if (removedItem) {
+        state.zoomedItems = state.zoomedItems.filter((item) => item.id !== itemIdToRemove);
+        state.totalQuantity -= removedItem.quantity;
+      }
+    },
+  },
+});
+
+export const {
+  toggleZoomedItem,
+  increaseItemQuantity,
+  decreaseItemQuantity,
+  getCartTotal,
+  removeItem,
+} = yourSlice.actions;
 
 // Combine reducers
 const rootReducer = combineReducers({
